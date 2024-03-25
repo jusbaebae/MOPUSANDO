@@ -12,6 +12,7 @@ public class PlayerMove : MonoBehaviour
 
     public float MaxSpeed;
     public float jumpPower;
+    public bool isDoubleJumping = false;
     Rigidbody2D rigid;
     SpriteRenderer spriteRenderer;
     CapsuleCollider2D coll;
@@ -51,17 +52,24 @@ public class PlayerMove : MonoBehaviour
     }
     void Update()
     {
-        //Jump
-        if (Input.GetButtonDown("Jump") && !anim.GetBool("isJumping"))
+        
+        if (Input.GetButtonDown("Jump") && !anim.GetBool("isJumping")) //Jump
         {
             rigid.AddForce(Vector2.up * jumpPower, ForceMode2D.Impulse);
             anim.SetBool("isJumping", true);
             PlaySound("JUMP");
+        } 
+        else if(isDoubleJumping && Input.GetButtonDown("Jump")) //DoubleJump
+        {
+            rigid.AddForce(Vector2.up * jumpPower, ForceMode2D.Impulse);
+            anim.SetBool("isJumping", true);
+            PlaySound("JUMP");
+            isDoubleJumping = false;
         }
 
         //Stop Speed
         if (Input.GetButtonUp("Horizontal")) {
-            rigid.velocity = new Vector2(0.000001f * rigid.velocity.normalized.x, rigid.velocity.y);
+            rigid.velocity = new Vector2(3f * rigid.velocity.normalized.x, rigid.velocity.y); //3f는 나중에 빙판길 미끄럼용
         }
 
         //Direction Sprite
@@ -79,6 +87,7 @@ public class PlayerMove : MonoBehaviour
         {
             anim.SetBool("isWalking", true);
         }
+
     }
     void FixedUpdate()
     {
@@ -95,15 +104,28 @@ public class PlayerMove : MonoBehaviour
             rigid.velocity = new Vector2(MaxSpeed * (-1) , rigid.velocity.y);
         }
 
+        //미끄러지지않게하기
+        if(h == 0)
+        {
+            rigid.constraints = RigidbodyConstraints2D.FreezePositionX | RigidbodyConstraints2D.FreezeRotation;
+        }
+        else
+        {
+            rigid.constraints = RigidbodyConstraints2D.FreezeRotation;
+        }
+
         //Landing Platform
         if(rigid.velocity.y < 0)
         {
-            Debug.DrawRay(rigid.position, Vector3.down, new Color(0, 1, 0));
-            RaycastHit2D rayHit = Physics2D.Raycast(rigid.position, Vector3.down, 1, LayerMask.GetMask("Platform"));
+            Debug.DrawRay(rigid.position + Vector2.right * h * 0.5f, Vector3.down, new Color(0, 1, 0));
+            RaycastHit2D rayHit = Physics2D.Raycast(rigid.position + Vector2.right * h * 0.5f , Vector3.down, 1, LayerMask.GetMask("Platform"));
             if (rayHit.collider != null)
             {
-                if (rayHit.distance < 0.5f)
+                if (rayHit.distance < 1f)
+                {
                     anim.SetBool("isJumping", false);
+                    isDoubleJumping = false;
+                }
             }
         }
     }
@@ -151,6 +173,12 @@ public class PlayerMove : MonoBehaviour
             else if (isGold)
             {
                 gameManager.stagePoint += 500;
+            }
+            else if (collision.gameObject.name.Contains("DoubleJump"))
+            {
+                //DoubleJump
+                rigid.velocity = Vector2.zero;
+                isDoubleJumping = true;
             }
 
             //Deactive Item
