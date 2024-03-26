@@ -61,7 +61,7 @@ public class PlayerMove : MonoBehaviour
         } 
         else if(isDoubleJumping && Input.GetButtonDown("Jump")) //DoubleJump
         {
-            rigid.AddForce(Vector2.up * jumpPower, ForceMode2D.Impulse);
+            rigid.AddForce(Vector2.up * jumpPower * 1.2f, ForceMode2D.Impulse);
             anim.SetBool("isJumping", true);
             PlaySound("JUMP");
             isDoubleJumping = false;
@@ -69,7 +69,7 @@ public class PlayerMove : MonoBehaviour
 
         //Stop Speed
         if (Input.GetButtonUp("Horizontal")) {
-            rigid.velocity = new Vector2(3f * rigid.velocity.normalized.x, rigid.velocity.y); //3f는 나중에 빙판길 미끄럼용
+            rigid.velocity = new Vector2(5f * rigid.velocity.normalized.x, rigid.velocity.y); //3f는 나중에 빙판길 미끄럼용
         }
 
         //Direction Sprite
@@ -105,7 +105,7 @@ public class PlayerMove : MonoBehaviour
         }
 
         //미끄러지지않게하기
-        if(h == 0)
+        if(h == 0 && gameManager.stageIndex < 6) //7스테이지부터는 얼음땅이라서 프리즈빼기
         {
             rigid.constraints = RigidbodyConstraints2D.FreezePositionX | RigidbodyConstraints2D.FreezeRotation;
         }
@@ -177,12 +177,18 @@ public class PlayerMove : MonoBehaviour
             else if (collision.gameObject.name.Contains("DoubleJump"))
             {
                 //DoubleJump
-                rigid.velocity = Vector2.zero;
                 isDoubleJumping = true;
             }
 
             //Deactive Item
             collision.gameObject.SetActive(false);
+
+            //더블점프 일정시간뒤 재생성
+            if (!collision.gameObject.activeSelf && collision.gameObject.name.Contains("DoubleJump"))
+            {
+                //더블점프가 비활성화될 때 실행되는 메서드
+                StartCoroutine(gameManager.RespawnAfterDelay(collision));
+            }
 
             //Sound
             PlaySound("ITEM");

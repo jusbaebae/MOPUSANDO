@@ -102,4 +102,12 @@ public class GameManager : MonoBehaviour
         Time.timeScale = 1;
         SceneManager.LoadScene(0);
     }
+    public IEnumerator RespawnAfterDelay(Collider2D collision)
+    {
+        yield return new WaitForSeconds(2f); // 재생성 딜레이 설정
+        if (!collision.gameObject.activeSelf) // 오브젝트가 비활성화된 상태인지 확인
+        {
+            collision.gameObject.SetActive(true); // 비활성화된 상태라면 활성화
+        }
+    }
 }
