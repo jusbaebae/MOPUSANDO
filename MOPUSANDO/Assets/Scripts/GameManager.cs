@@ -75,6 +75,7 @@ public class GameManager : MonoBehaviour
     void PlayerReposition()
     {
         player.transform.position = new Vector3(-13.5f, 2.5f, -1);
+        player.MaxSpeed = 4.5f;
         player.VelocityZero();
     }
 
@@ -102,12 +103,20 @@ public class GameManager : MonoBehaviour
         Time.timeScale = 1;
         SceneManager.LoadScene(0);
     }
-    public IEnumerator RespawnAfterDelay(Collider2D collision)
+    public IEnumerator RespawnAfterDelay(Collider2D collision) //오브젝트 재생성
     {
         yield return new WaitForSeconds(2f); // 재생성 딜레이 설정
         if (!collision.gameObject.activeSelf) // 오브젝트가 비활성화된 상태인지 확인
         {
             collision.gameObject.SetActive(true); // 비활성화된 상태라면 활성화
         }
+    }
+
+    public IEnumerator Boosting(Collider2D collision) //부스터
+    {
+        player.MaxSpeed = 10;
+        yield return new WaitForSeconds(3f); //딜레이 설정
+        player.MaxSpeed = 4.5f;
+        player.boostingCoroutine = null;
     }
 }

@@ -13,6 +13,7 @@ public class PlayerMove : MonoBehaviour
     public float MaxSpeed;
     public float jumpPower;
     public bool isDoubleJumping = false;
+    public Coroutine boostingCoroutine;
     Rigidbody2D rigid;
     SpriteRenderer spriteRenderer;
     CapsuleCollider2D coll;
@@ -52,24 +53,27 @@ public class PlayerMove : MonoBehaviour
     }
     void Update()
     {
-        
-        if (Input.GetButtonDown("Jump") && !anim.GetBool("isJumping")) //Jump
+        if(gameManager.stageIndex < 10) //11스테이지부터는 자동점프이므로 점프가 필요없음
         {
-            rigid.AddForce(Vector2.up * jumpPower, ForceMode2D.Impulse);
-            anim.SetBool("isJumping", true);
-            PlaySound("JUMP");
-        } 
-        else if(isDoubleJumping && Input.GetButtonDown("Jump")) //DoubleJump
-        {
-            rigid.AddForce(Vector2.up * jumpPower * 1.2f, ForceMode2D.Impulse);
-            anim.SetBool("isJumping", true);
-            PlaySound("JUMP");
-            isDoubleJumping = false;
+            if (Input.GetButtonDown("Jump") && !anim.GetBool("isJumping")) //Jump
+            {
+                rigid.AddForce(Vector2.up * jumpPower, ForceMode2D.Impulse);
+                anim.SetBool("isJumping", true);
+                PlaySound("JUMP");
+            }
+            else if (isDoubleJumping && Input.GetButtonDown("Jump")) //DoubleJump
+            {
+                rigid.AddForce(Vector2.up * jumpPower * 1.2f, ForceMode2D.Impulse);
+                anim.SetBool("isJumping", true);
+                PlaySound("JUMP");
+                isDoubleJumping = false;
+            }
         }
+        
 
         //Stop Speed
         if (Input.GetButtonUp("Horizontal")) {
-            rigid.velocity = new Vector2(5f * rigid.velocity.normalized.x, rigid.velocity.y); //3f는 나중에 빙판길 미끄럼용
+            rigid.velocity = new Vector2(5f * rigid.velocity.normalized.x, rigid.velocity.y); //5f는 나중에 빙판길 미끄럼용
         }
 
         //Direction Sprite
@@ -95,17 +99,17 @@ public class PlayerMove : MonoBehaviour
         float h = Input.GetAxisRaw("Horizontal");
         rigid.AddForce(Vector2.right * h, ForceMode2D.Impulse);
 
-        if(rigid.velocity.x > MaxSpeed) //Right Max Speed
+        if (rigid.velocity.x > MaxSpeed) //Right Max Speed
         {
             rigid.velocity = new Vector2(MaxSpeed, rigid.velocity.y);
-        } 
-        else if(rigid.velocity.x < MaxSpeed * (-1)) //Left Max Speed
+        }
+        else if (rigid.velocity.x < MaxSpeed * (-1)) //Left Max Speed
         {
-            rigid.velocity = new Vector2(MaxSpeed * (-1) , rigid.velocity.y);
+            rigid.velocity = new Vector2(MaxSpeed * (-1), rigid.velocity.y);
         }
 
         //미끄러지지않게하기
-        if(h == 0 && gameManager.stageIndex < 6) //7스테이지부터는 얼음땅이라서 프리즈빼기
+        if(h == 0 && (gameManager.stageIndex < 6 || gameManager.stageIndex > 10)) //7스테이지부터는 얼음땅이라서 프리즈빼기
         {
             rigid.constraints = RigidbodyConstraints2D.FreezePositionX | RigidbodyConstraints2D.FreezeRotation;
         }
@@ -125,6 +129,10 @@ public class PlayerMove : MonoBehaviour
                 {
                     anim.SetBool("isJumping", false);
                     isDoubleJumping = false;
+                    if(gameManager.stageIndex >= 11 && rayHit.distance < 0.5f) //11스테이지 자동점프 설정
+                    {
+                        Jump();
+                    }
                 }
             }
         }
@@ -178,15 +186,29 @@ public class PlayerMove : MonoBehaviour
             {
                 //DoubleJump
                 isDoubleJumping = true;
+                if(gameManager.stageIndex >= 11)
+                {
+                    rigid.velocity = Vector2.up * jumpPower;
+                }
+            }
+            else if (collision.gameObject.name.Contains("Booster"))
+            {
+                
+                if (boostingCoroutine != null)
+                {
+                    //Booster
+                    StopCoroutine(boostingCoroutine); //이전에있던 코루틴삭제
+                }
+                boostingCoroutine = StartCoroutine(gameManager.Boosting(collision));
             }
 
             //Deactive Item
             collision.gameObject.SetActive(false);
 
-            //더블점프 일정시간뒤 재생성
-            if (!collision.gameObject.activeSelf && collision.gameObject.name.Contains("DoubleJump"))
+            //더블점프,부스터 일정시간뒤 재생성
+            if (!collision.gameObject.activeSelf && collision.gameObject.name.Contains("DoubleJump") || collision.gameObject.name.Contains("Booster"))
             {
-                //더블점프가 비활성화될 때 실행되는 메서드
+                //오브젝트가 비활성화될 때 실행되는 메서드
                 StartCoroutine(gameManager.RespawnAfterDelay(collision));
             }
 
@@ -204,9 +226,17 @@ public class PlayerMove : MonoBehaviour
     {
         //Point
         gameManager.stagePoint += 100;
+
         //Reaction Force
-        rigid.AddForce(Vector2.up * 8, ForceMode2D.Impulse);
-            
+        if (gameManager.stageIndex < 6 || gameManager.stageIndex > 10)
+        {
+            rigid.AddForce(Vector2.up * 8, ForceMode2D.Impulse);
+        }
+        else if(gameManager.stageIndex >= 6 || gameManager.stageIndex <= 10) //빙판길
+        {
+            rigid.AddForce(Vector2.up * 4, ForceMode2D.Impulse);
+        }
+
         //Enemy Die
         EnemyMove enemyMove = enemy.GetComponent<EnemyMove>();
         enemyMove.OnDamaged();
@@ -224,8 +254,17 @@ public class PlayerMove : MonoBehaviour
         spriteRenderer.color = new Color(1, 1, 1, 0.4f);
 
         //Reaction Force
-        int dirc = transform.position.x - targetPos.x > 0 ? 1 : -1;
-        rigid.AddForce(new Vector2(dirc, 1) * 7, ForceMode2D.Impulse);
+        if(gameManager.stageIndex < 6 || gameManager.stageIndex > 10)
+        {
+            int dirc = transform.position.x - targetPos.x > 0 ? 1 : -1;
+            rigid.AddForce(new Vector2(dirc, 1) * 7, ForceMode2D.Impulse);
+        }
+        else if(gameManager.stageIndex >= 6 || gameManager.stageIndex <= 10) //빙판길
+        {
+            int dirc = transform.position.x - targetPos.x > 0 ? 1 : -1;
+            rigid.AddForce(new Vector2(dirc, 1) * 3, ForceMode2D.Impulse);
+        }
+        
 
         //Animation
         anim.SetTrigger("isDamaged");
@@ -253,5 +292,12 @@ public class PlayerMove : MonoBehaviour
     public void VelocityZero()
     {
         rigid.velocity = Vector2.zero;
+    }
+
+    public void Jump() 
+    {
+        rigid.velocity = Vector2.up * jumpPower;
+        anim.SetBool("isJumping", true);
+        PlaySound("JUMP");
     }
 }
