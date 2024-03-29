@@ -76,6 +76,7 @@ public class GameManager : MonoBehaviour
     {
         player.transform.position = new Vector3(-13.5f, 2.5f, -1);
         player.MaxSpeed = 4.5f;
+        player.jumpPower = 12f;
         player.VelocityZero();
     }
 
@@ -115,8 +116,10 @@ public class GameManager : MonoBehaviour
     public IEnumerator Boosting(Collider2D collision) //부스터
     {
         player.MaxSpeed = 10;
+        player.jumpPower = 15f;
         yield return new WaitForSeconds(3f); //딜레이 설정
         player.MaxSpeed = 4.5f;
+        player.jumpPower = 12f;
         player.boostingCoroutine = null;
     }
 }

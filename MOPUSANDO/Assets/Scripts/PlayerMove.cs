@@ -14,7 +14,7 @@ public class PlayerMove : MonoBehaviour
     public float jumpPower;
     public bool isDoubleJumping = false;
     public Coroutine boostingCoroutine;
-    Rigidbody2D rigid;
+    public Rigidbody2D rigid;
     SpriteRenderer spriteRenderer;
     CapsuleCollider2D coll;
     Animator anim;
@@ -53,7 +53,7 @@ public class PlayerMove : MonoBehaviour
     }
     void Update()
     {
-        if(gameManager.stageIndex < 10) //11스테이지부터는 자동점프이므로 점프가 필요없음
+        if(gameManager.stageIndex < 11) //11스테이지부터는 자동점프이므로 점프가 필요없음
         {
             if (Input.GetButtonDown("Jump") && !anim.GetBool("isJumping")) //Jump
             {
@@ -63,7 +63,7 @@ public class PlayerMove : MonoBehaviour
             }
             else if (isDoubleJumping && Input.GetButtonDown("Jump")) //DoubleJump
             {
-                rigid.AddForce(Vector2.up * jumpPower * 1.2f, ForceMode2D.Impulse);
+                rigid.velocity = Vector2.up * jumpPower;
                 anim.SetBool("isJumping", true);
                 PlaySound("JUMP");
                 isDoubleJumping = false;
@@ -121,8 +121,7 @@ public class PlayerMove : MonoBehaviour
         //Landing Platform
         if(rigid.velocity.y < 0)
         {
-            Debug.DrawRay(rigid.position + Vector2.right * h * 0.5f, Vector3.down, new Color(0, 1, 0));
-            RaycastHit2D rayHit = Physics2D.Raycast(rigid.position + Vector2.right * h * 0.5f , Vector3.down, 1, LayerMask.GetMask("Platform"));
+            RaycastHit2D rayHit = Physics2D.BoxCast(coll.bounds.center, coll.bounds.size, 0f, Vector3.down, 1f, LayerMask.GetMask("Platform"));
             if (rayHit.collider != null)
             {
                 if (rayHit.distance < 1f)
@@ -165,7 +164,7 @@ public class PlayerMove : MonoBehaviour
     {
         if(collision.gameObject.tag == "Item")
         {
-            // Point
+            //Point
             bool isBronze = collision.gameObject.name.Contains("Bronze");
             bool isSilver = collision.gameObject.name.Contains("Silver");
             bool isGold = collision.gameObject.name.Contains("Gold");
@@ -193,7 +192,6 @@ public class PlayerMove : MonoBehaviour
             }
             else if (collision.gameObject.name.Contains("Booster"))
             {
-                
                 if (boostingCoroutine != null)
                 {
                     //Booster
@@ -201,10 +199,7 @@ public class PlayerMove : MonoBehaviour
                 }
                 boostingCoroutine = StartCoroutine(gameManager.Boosting(collision));
             }
-
-            //Deactive Item
-            collision.gameObject.SetActive(false);
-
+           
             //더블점프,부스터 일정시간뒤 재생성
             if (!collision.gameObject.activeSelf && collision.gameObject.name.Contains("DoubleJump") || collision.gameObject.name.Contains("Booster"))
             {
@@ -265,7 +260,6 @@ public class PlayerMove : MonoBehaviour
             rigid.AddForce(new Vector2(dirc, 1) * 3, ForceMode2D.Impulse);
         }
         
-
         //Animation
         anim.SetTrigger("isDamaged");
 
