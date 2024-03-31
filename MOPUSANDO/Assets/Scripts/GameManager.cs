@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.SceneManagement;
+using UnityEngine.Tilemaps;
 
 public class GameManager : MonoBehaviour
 {
@@ -113,7 +114,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public IEnumerator Boosting(Collider2D collision) //부스터
+    public IEnumerator Boosting() //부스터
     {
         player.MaxSpeed = 10;
         player.jumpPower = 15f;

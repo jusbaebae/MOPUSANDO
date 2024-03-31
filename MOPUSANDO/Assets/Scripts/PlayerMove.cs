@@ -16,7 +16,7 @@ public class PlayerMove : MonoBehaviour
     public Coroutine boostingCoroutine;
     public Rigidbody2D rigid;
     SpriteRenderer spriteRenderer;
-    CapsuleCollider2D coll;
+    public CapsuleCollider2D coll;
     Animator anim;
     AudioSource audioSource;
 
@@ -91,7 +91,6 @@ public class PlayerMove : MonoBehaviour
         {
             anim.SetBool("isWalking", true);
         }
-
     }
     void FixedUpdate()
     {
@@ -124,14 +123,11 @@ public class PlayerMove : MonoBehaviour
             RaycastHit2D rayHit = Physics2D.BoxCast(coll.bounds.center, coll.bounds.size, 0f, Vector3.down, 1f, LayerMask.GetMask("Platform"));
             if (rayHit.collider != null)
             {
-                if (rayHit.distance < 1f)
+                anim.SetBool("isJumping", false);
+                isDoubleJumping = false;
+                if(gameManager.stageIndex >= 11) //11스테이지 자동점프 설정
                 {
-                    anim.SetBool("isJumping", false);
-                    isDoubleJumping = false;
-                    if(gameManager.stageIndex >= 11 && rayHit.distance < 0.5f) //11스테이지 자동점프 설정
-                    {
-                        Jump();
-                    }
+                    Invoke("Jump",0.01f);
                 }
             }
         }
@@ -157,6 +153,10 @@ public class PlayerMove : MonoBehaviour
         {
             OnDamaged(collision.transform.position);
             PlaySound("DAMAGED");
+        }
+        if (collision.gameObject.name.Contains("DisPlatform"))
+        {
+            StopCoroutine(gameManager.RespawnAfterDelay(coll));
         }
     }
 
@@ -197,9 +197,11 @@ public class PlayerMove : MonoBehaviour
                     //Booster
                     StopCoroutine(boostingCoroutine); //이전에있던 코루틴삭제
                 }
-                boostingCoroutine = StartCoroutine(gameManager.Boosting(collision));
+                boostingCoroutine = StartCoroutine(gameManager.Boosting());
             }
-           
+
+            collision.gameObject.SetActive(false);
+
             //더블점프,부스터 일정시간뒤 재생성
             if (!collision.gameObject.activeSelf && collision.gameObject.name.Contains("DoubleJump") || collision.gameObject.name.Contains("Booster"))
             {
