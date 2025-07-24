@@ -9,6 +9,7 @@ public class PlayerMove : MonoBehaviour
     public AudioClip audioAttack;
     public AudioClip audioDamaged;
     public AudioClip audioItem;
+    public AudioClip audioPortal;
 
     public float MaxSpeed;
     public float jumpPower;
@@ -47,6 +48,10 @@ public class PlayerMove : MonoBehaviour
                 break;
             case "ITEM":
                 audioSource.clip = audioItem;
+                audioSource.Play();
+                break;
+            case "PORTAL":
+                audioSource.clip = audioPortal;
                 audioSource.Play();
                 break;
         }
@@ -162,61 +167,63 @@ public class PlayerMove : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D collision)
     {
-        if(collision.gameObject.tag == "Item")
-        {
+            if (collision.gameObject.tag == "Item")
+            {
             //Point
             bool isBronze = collision.gameObject.name.Contains("Bronze");
             bool isSilver = collision.gameObject.name.Contains("Silver");
             bool isGold = collision.gameObject.name.Contains("Gold");
 
-            if(isBronze)
-            {
-                gameManager.stagePoint += 100;
-            }
-            else if(isSilver)
-            {
-                gameManager.stagePoint += 300;
-            } 
-            else if (isGold)
-            {
-                gameManager.stagePoint += 500;
-            }
-            else if (collision.gameObject.name.Contains("DoubleJump"))
-            {
-                //DoubleJump
-                isDoubleJumping = true;
-                if(gameManager.stageIndex >= 11)
+                if(isBronze)
                 {
-                    rigid.velocity = Vector2.up * jumpPower;
+                    gameManager.stagePoint += 100;
                 }
-            }
-            else if (collision.gameObject.name.Contains("Booster"))
-            {
-                if (boostingCoroutine != null)
+                else if(isSilver)
                 {
-                    //Booster
-                    StopCoroutine(boostingCoroutine); //이전에있던 코루틴삭제
+                    gameManager.stagePoint += 300;
+                } 
+                else if (isGold)
+                {
+                    gameManager.stagePoint += 500;
                 }
-                boostingCoroutine = StartCoroutine(gameManager.Boosting());
-            }
+                else if (collision.gameObject.name.Contains("DoubleJump"))
+                {
+                    //DoubleJump
+                    isDoubleJumping = true;
+                    if(gameManager.stageIndex >= 11)
+                    {
+                        rigid.velocity = Vector2.up * jumpPower;
+                    }
+                }
+                else if (collision.gameObject.name.Contains("Booster"))
+                {
+                    if (boostingCoroutine != null)
+                    {
+                        //Booster
+                        StopCoroutine(boostingCoroutine); //이전에있던 코루틴삭제
+                    }
+                    boostingCoroutine = StartCoroutine(gameManager.Boosting());
+                }
 
             collision.gameObject.SetActive(false);
 
-            //더블점프,부스터 일정시간뒤 재생성
-            if (!collision.gameObject.activeSelf && collision.gameObject.name.Contains("DoubleJump") || collision.gameObject.name.Contains("Booster"))
-            {
-                //오브젝트가 비활성화될 때 실행되는 메서드
-                StartCoroutine(gameManager.RespawnAfterDelay(collision));
+                //더블점프,부스터 일정시간뒤 재생성
+                if (!collision.gameObject.activeSelf && collision.gameObject.name.Contains("DoubleJump") || collision.gameObject.name.Contains("Booster"))
+                {
+                    //오브젝트가 비활성화될 때 실행되는 메서드
+                    StartCoroutine(gameManager.RespawnAfterDelay(collision));
+                }
+                PlaySound("ITEM");
             }
-
-            //Sound
-            PlaySound("ITEM");
-        }
-        else if (collision.gameObject.tag == "Finish")
-        {
-            //Next Stage
-            gameManager.NextStage();
-        }
+            else if (collision.gameObject.tag == "Portal")
+            {
+            PlaySound("PORTAL");
+            }
+            else if (collision.gameObject.tag == "Finish")
+            {
+                //Next Stage
+                gameManager.NextStage();
+            }
     }
 
     void OnAttack(Transform enemy)
