@@ -28,12 +28,6 @@ public class DisPlatform : MonoBehaviour
         {
             FadeOut();
         }
-        else
-        {
-            Color color = tilemap.color;
-            color.a += 1f * Time.deltaTime; // 투명도를 서서히 증가시킴
-            tilemap.color = color;
-        }
     }
 
     void FadeOut()
@@ -51,7 +45,10 @@ public class DisPlatform : MonoBehaviour
 
     void FadeIn()
     {
-        gameObject.SetActive(true);
+        gameObject.SetActive(true); // 게임 오브젝트 활성화
+        Color color = tilemap.color;
+        color.a = 1f; // 알파 값을 1 (완전히 불투명)으로 설정
+        tilemap.color = color; // 변경된 색상 적용
     }
 
     void OnDisable()

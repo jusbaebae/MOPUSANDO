@@ -118,7 +118,7 @@ public class GameManager : MonoBehaviour
     {
         player.MaxSpeed = 10;
         player.jumpPower = 15f;
-        yield return new WaitForSeconds(3f); //µÙ∑π¿Ã º≥¡§
+        yield return new WaitForSeconds(2f); //µÙ∑π¿Ã º≥¡§
         player.MaxSpeed = 4.5f;
         player.jumpPower = 12f;
         player.boostingCoroutine = null;

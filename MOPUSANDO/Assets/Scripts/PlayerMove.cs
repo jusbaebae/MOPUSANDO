@@ -58,7 +58,7 @@ public class PlayerMove : MonoBehaviour
     }
     void Update()
     {
-        if(gameManager.stageIndex < 11) //11스테이지부터는 자동점프이므로 점프가 필요없음
+        if(gameManager.stageIndex < 11) //11~16스테이지는 자동점프, 17~??스테이지는 중력반전이므로 점프가 필요없음
         {
             if (Input.GetButtonDown("Jump") && !anim.GetBool("isJumping")) //Jump
             {
@@ -74,8 +74,16 @@ public class PlayerMove : MonoBehaviour
                 isDoubleJumping = false;
             }
         }
-        
 
+        if(gameManager.stageIndex > 16)
+        {
+            if (Input.GetKeyUp(KeyCode.Space))
+            {
+                rigid.gravityScale *= -1; //중력반전
+                transform.localScale = new Vector3(transform.localScale.x, transform.localScale.y * -1, transform.localScale.z);
+            }
+        }
+        
         //Stop Speed
         if (Input.GetButtonUp("Horizontal")) {
             rigid.velocity = new Vector2(5f * rigid.velocity.normalized.x, rigid.velocity.y); //5f는 나중에 빙판길 미끄럼용
@@ -130,7 +138,7 @@ public class PlayerMove : MonoBehaviour
             {
                 anim.SetBool("isJumping", false);
                 isDoubleJumping = false;
-                if(gameManager.stageIndex >= 11) //11스테이지 자동점프 설정
+                if(gameManager.stageIndex >= 11 && gameManager.stageIndex <= 16) //11~16스테이지 자동점프 설정
                 {
                     Invoke("Jump",0.01f);
                 }
@@ -236,7 +244,7 @@ public class PlayerMove : MonoBehaviour
         {
             rigid.AddForce(Vector2.up * 8, ForceMode2D.Impulse);
         }
-        else if(gameManager.stageIndex >= 6 || gameManager.stageIndex <= 10) //빙판길
+        else if(gameManager.stageIndex >= 6 && gameManager.stageIndex <= 10) //빙판길
         {
             rigid.AddForce(Vector2.up * 4, ForceMode2D.Impulse);
         }
@@ -263,7 +271,7 @@ public class PlayerMove : MonoBehaviour
             int dirc = transform.position.x - targetPos.x > 0 ? 1 : -1;
             rigid.AddForce(new Vector2(dirc, 1) * 7, ForceMode2D.Impulse);
         }
-        else if(gameManager.stageIndex >= 6 || gameManager.stageIndex <= 10) //빙판길
+        else if(gameManager.stageIndex >= 6 && gameManager.stageIndex <= 10) //빙판길
         {
             int dirc = transform.position.x - targetPos.x > 0 ? 1 : -1;
             rigid.AddForce(new Vector2(dirc, 1) * 3, ForceMode2D.Impulse);
