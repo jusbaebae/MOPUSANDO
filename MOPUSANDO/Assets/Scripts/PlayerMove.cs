@@ -10,6 +10,7 @@ public class PlayerMove : MonoBehaviour
     public AudioClip audioDamaged;
     public AudioClip audioItem;
     public AudioClip audioPortal;
+    public AudioClip audioGravity;
 
     public float MaxSpeed;
     public float jumpPower;
@@ -54,6 +55,10 @@ public class PlayerMove : MonoBehaviour
                 audioSource.clip = audioPortal;
                 audioSource.Play();
                 break;
+            case "GRAVITY":
+                audioSource.clip = audioPortal;
+                audioSource.Play();
+                break;
         }
     }
     void Update()
@@ -72,15 +77,6 @@ public class PlayerMove : MonoBehaviour
                 anim.SetBool("isJumping", true);
                 PlaySound("JUMP");
                 isDoubleJumping = false;
-            }
-        }
-
-        if(gameManager.stageIndex > 16)
-        {
-            if (Input.GetKeyUp(KeyCode.Space))
-            {
-                rigid.gravityScale *= -1; //중력반전
-                transform.localScale = new Vector3(transform.localScale.x, transform.localScale.y * -1, transform.localScale.z);
             }
         }
         
@@ -225,7 +221,7 @@ public class PlayerMove : MonoBehaviour
             }
             else if (collision.gameObject.tag == "Portal")
             {
-            PlaySound("PORTAL");
+                PlaySound("PORTAL");
             }
             else if (collision.gameObject.tag == "Finish")
             {
